@@ -15,21 +15,20 @@ from datetime import date
 
 load_dotenv()
 
-COLUMN_NAMES = ['id',
-                'name',
-                'created_at']
+app.secret_key = os.getenv('SECRET_KEY')
+app = Flask(__name__)
+
 DATABASE_URL = os.getenv('DATABASE_URL')
 connect = psycopg2.connect(DATABASE_URL)
+
 CURSOR = connect.cursor()
 CREATE_TABLES = CURSOR.execute(open('./database.sql', 'r').read())
-app = Flask(__name__)
+
 INDEX_DATA_WEBSITE = 0
-PROTOCOL_HTTPS = 'https://'
-app.secret_key =  os.getenv('SECRET_KEY')
 
 
 def load_data_in_base(url):
-    formatt_url = PROTOCOL_HTTPS + urlparse(url).netloc
+    formatt_url = urlparse(url).shema + '://' + urlparse(url).netloc
     formatt_date = date.today().isoformat()
     CURSOR.execute(f'SELECT * FROM urls WHERE name = \'{formatt_url}\';')
     data_check = True if CURSOR.fetchall() else False
@@ -75,7 +74,7 @@ def get_adress():
     elif request.method == 'POST':
         if validators.url(URL):
             load_data_in_base(URL)
-            correct_url = PROTOCOL_HTTPS + urlparse(URL).netloc
+            correct_url = urlparse(url).shema + '://' + urlparse(url).netloc
             CURSOR.execute(f'''SELECT id FROM urls
                             WHERE name = \'{correct_url}\';''')
             web_id = CURSOR.fetchall()[INDEX_DATA_WEBSITE]
