@@ -1,3 +1,2 @@
-#!/usr/bin/env bash
-
-make install && psql database -a  -f database.sql
+!/usr/bin/env bash
+make install && psql -a --dbname=DB_Page_analyzer --file=database.sql

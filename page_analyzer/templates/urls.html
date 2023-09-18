@@ -40,11 +40,11 @@
     </tr>
     </thead>
     <tbody>
-        {% for data in data_urls %}
+        {% for data in urls %}
         <tr>
-            <td>{{ data[0] }}</td>
+            <td>{{ data.id }}</td>
             <td>
-                <a href='/urls/{{ data[0] }}'>{{ data[1] }}</a>
+                <a href='/urls/{{ data.id }}'>{{ data.name }}</a>
             </td>
             <td></td>
             <td></td>

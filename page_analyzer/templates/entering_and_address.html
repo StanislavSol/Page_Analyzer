@@ -30,7 +30,7 @@
 
   <main class="flex-grow-1">
     <div class="container-lg mt-3">
-        <h1>Сайт: {{ website[0][0] }}</h1>
+        <h1>Сайт: {{ website }}</h1>
 
     
   <div class="table-responsive">
@@ -38,15 +38,15 @@
       <tbody>
         <tr>
           <td>ID</td>
-          <td>{{ data_website[0] }}</td>
+          <td>{{ data_website.id }}</td>
         </tr>
         <tr>
           <td>Имя</td>
-          <td>{{ data_website[1] }}</td>
+          <td>{{ data_website.name }}</td>
         </tr>
         <tr>
           <td>Дата создания</td>
-          <td>{{ data_website[2] }}</td>
+          <td>{{ data_website.created_id }}</td>
         </tr>
       </tbody>
     </table>
