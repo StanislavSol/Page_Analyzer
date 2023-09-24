@@ -14,5 +14,5 @@ coverage.xml
 page_analyzer/.env
 .swo
 .swp
-.env
+*.env
 .build.sh
