@@ -46,8 +46,13 @@
             <td>
                 <a href='/urls/{{ data.id }}'>{{ data.name }}</a>
             </td>
+            {% if data.created_at and data.status_code %}
+            <td>{{ data.created_at }}</td>
+            <td>{{ data.status_code }}</td>
+            {% else %}
             <td></td>
             <td></td>
+            {% endif %}
         {% endfor %}
     </tbody>
   </table>
