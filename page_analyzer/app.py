@@ -9,13 +9,31 @@ from page_analyzer.validator import valid_url
 from page_analyzer import db
 from dotenv import load_dotenv
 import os
+import psycopg2
+from contextlib import contextmanager
 
 
 load_dotenv()
-
-
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+
+@contextmanager
+def connect(bd_url):
+    try:
+        connection = psycopg2.connect(bd_url)
+        yield connection
+    except Exception:
+        if connection:
+            connection.rollback()
+        raise
+    else:
+        if connection:
+            connection.commit()
+    finally:
+        if connection:
+            connection.close()
 
 
 @app.route('/')
@@ -25,7 +43,8 @@ def get_home_page():
 
 @app.get('/urls')
 def get_urls():
-    return render_template('urls.html', urls=db.get_urls())
+    with connect(DATABASE_URL) as conn:
+        return render_template('urls.html', urls=db.get_urls(conn))
 
 
 @app.post('/urls')
@@ -40,30 +59,33 @@ def post_adress():
                 messages=messages,
                 value_url=url), 422
     else:
-        get_id, message = db.add_data_to_page(url)
-        flash(*message)
-        return redirect(url_for('get_id_page',
-                                id=get_id))
+        with connect(DATABASE_URL) as conn:
+            get_id, message = db.add_data_to_page(url, conn)
+            flash(*message)
+            return redirect(url_for('get_id_page',
+                                    id=get_id))
 
 
 @app.route('/urls/<int:id>')
 def get_id_page(id):
-    result_check = db.get_checks(id)
-    get_data = db.get_data_by_id(id)
-    messages = get_flashed_messages(with_categories=True)
-    return render_template(
-            'entering_and_address.html',
-            messages=messages,
-            data_website=get_data,
-            result_check=result_check)
+    with connect(DATABASE_URL) as conn:
+        result_check = db.get_checks(id, conn)
+        get_data = db.get_data_by_id(id, conn)
+        messages = get_flashed_messages(with_categories=True)
+        return render_template(
+                'entering_and_address.html',
+                messages=messages,
+                data_website=get_data,
+                result_check=result_check)
 
 
 @app.post('/urls/<int:id>/checks')
 def get_check_website(id):
-    url = db.get_data_by_id(id).name
-    message = db.add_data_to_check(id, url)
-    flash(*message)
-    return redirect(url_for('get_id_page', id=id))
+    with connect(DATABASE_URL) as conn:
+        url = db.get_data_by_id(id, conn).name
+        message = db.add_data_to_check(id, url, conn)
+        flash(*message)
+        return redirect(url_for('get_id_page', id=id))
 
 
 @app.errorhandler(404)
