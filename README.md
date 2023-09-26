@@ -6,6 +6,6 @@
 
 [Page Analyzer](https://python-project-83-mv6t.onrender.com/) - is a site that analyzes specified pages for SEO suitability.
 
-###Instructions:
-make build: Building the application
-make start: Launching the application
+### Instructions:
+* make build: Building the application
+* make start: Launching the application
