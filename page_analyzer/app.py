@@ -54,10 +54,9 @@ def post_adress():
     if message:
         flash(*message)
         messages = get_flashed_messages(with_categories=True)
-        return render_template(
-                'home_page.html',
-                messages=messages,
-                value_url=url), 422
+        return render_template('home_page.html',
+                               messages=messages,
+                               value_url=url), 422
     else:
         with connect(DATABASE_URL) as conn:
             get_id, message = db.add_data_to_page(url, conn)
@@ -72,11 +71,10 @@ def get_id_page(id):
         result_check = db.get_checks(id, conn)
         get_data = db.get_data_by_id(id, conn)
         messages = get_flashed_messages(with_categories=True)
-        return render_template(
-                'entering_and_address.html',
-                messages=messages,
-                data_website=get_data,
-                result_check=result_check)
+        return render_template('entering_and_address.html',
+                               messages=messages,
+                               data_website=get_data,
+                               result_check=result_check)
 
 
 @app.post('/urls/<int:id>/checks')
