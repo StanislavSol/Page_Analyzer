@@ -11,6 +11,10 @@ from dotenv import load_dotenv
 import os
 import psycopg2
 from contextlib import contextmanager
+from datetime import date
+from urllib.parse import urlparse
+import requests
+from page_analyzer.html_check import get_pars_html
 
 
 load_dotenv()
@@ -20,9 +24,9 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 @contextmanager
-def connect(bd_url):
+def connect(db_url):
     try:
-        connection = psycopg2.connect(bd_url)
+        connection = psycopg2.connect(db_url)
         yield connection
     except Exception:
         if connection:
@@ -37,8 +41,8 @@ def connect(bd_url):
 
 
 @app.route('/')
-def get_home_page():
-    return render_template('home_page.html')
+def index():
+    return render_template('index.html')
 
 
 @app.get('/urls')
@@ -50,17 +54,27 @@ def get_urls():
 @app.post('/urls')
 def post_adress():
     url = request.form.get('url')
-    message = valid_url(url)
-    if message:
-        flash(*message)
+    errors = valid_url(url)
+    format_url = f'{urlparse(url).scheme}://{urlparse(url).netloc}'
+    format_date = date.today().isoformat()
+    if errors:
+        flash(*errors)
         messages = get_flashed_messages(with_categories=True)
-        return render_template('home_page.html',
+        return render_template('index.html',
                                messages=messages,
                                value_url=url), 422
     else:
         with connect(DATABASE_URL) as conn:
-            get_id, message = db.add_data_to_page(url, conn)
-            flash(*message)
+            try:
+                get_id = db.add_data_to_page(format_url,
+                                             format_date,
+                                             conn)
+                flash('Страница успешно добавлена', 'success')
+            except Exception:
+                with connect(DATABASE_URL) as conn:
+                    get_id = db.get_id_by_url(format_url, conn)
+                    flash('Страница уже существует', 'success')
+
             return redirect(url_for('get_id_page',
                                     id=get_id))
 
@@ -81,16 +95,29 @@ def get_id_page(id):
 def get_check_website(id):
     with connect(DATABASE_URL) as conn:
         url = db.get_data_by_id(id, conn).name
-        message = db.add_data_to_check(id, url, conn)
-        flash(*message)
+        try:
+            get_status = requests.get(url).status_code
+        except requests.exceptions.ConnectionError:
+            get_status = None
+
+        if get_status == 200:
+            head, title, description = get_pars_html(requests.get(url))
+            try:
+                db.add_data_to_check(id, url, get_status, head,
+                                     title, description, conn)
+                flash('Страница успешно проверена', 'success')
+            except Exception:
+                flash('Произошла ошибка при проверке', 'danger')
+        else:
+            flash('Произошла ошибка при проверке', 'danger')
         return redirect(url_for('get_id_page', id=id))
 
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('error/404.html'), 404
+    return render_template('errors/404.html'), 404
 
 
 @app.errorhandler(500)
 def server_error(error):
-    return render_template('error/500.html'), 500
+    return render_template('errors/500.html'), 500

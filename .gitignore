@@ -1,5 +1,5 @@
 *.egg-info
-__pycache__
+__pycache__/
 dist/
 *.pyc
 .venv/
@@ -12,7 +12,7 @@ coverage.xml
 coverage.xml
 .idea/.DS_Store
 page_analyzer/.env
-.swo
-.swp
+*.swo
+*.swp
 *.env
 .build.sh

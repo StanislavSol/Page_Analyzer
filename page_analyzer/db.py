@@ -1,35 +1,19 @@
-from dotenv import load_dotenv
 from psycopg2.extras import NamedTupleCursor
-from datetime import date
-from urllib.parse import urlparse
-import requests
-from page_analyzer.html_check import get_pars_html
-load_dotenv()
 
 
-def add_data_to_page(url, connect):
-    format_url = f'{urlparse(url).scheme}://{urlparse(url).netloc}'
-    format_date = date.today().isoformat()
-
-    with connect.cursor(cursor_factory=NamedTupleCursor) as curs:
+def add_data_to_page(url, date, connection):
+    with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
+        curs.execute(f'''INSERT INTO urls (name, created_at)
+                      VALUES (\'{url}\',
+                      \'{date}\');''')
         curs.execute('''SELECT id FROM urls
-                     WHERE name=%s;''', (format_url,))
-        if curs.fetchone() is None:
-            message = ('Страница успешно добавлена', 'success')
-            curs.execute(f'''INSERT INTO urls (name, created_at)
-                            VALUES (\'{format_url}\',
-                            \'{format_date}\');''')
-        else:
-            message = ('Страница уже существует', 'success')
-
-        curs.execute('''SELECT * FROM urls
-                      WHERE name=%s;''', (format_url,))
+                         WHERE name=%s;''', (url,))
         get_id = curs.fetchone()
-        return get_id.id, message
+        return get_id.id
 
 
-def get_urls(connect):
-    with connect.cursor(cursor_factory=NamedTupleCursor) as curs:
+def get_urls(connection):
+    with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
         curs.execute('''SELECT DISTINCT urls.id, name,
                      url_checks.created_at, status_code
                      FROM urls
@@ -39,37 +23,40 @@ def get_urls(connect):
         return urls
 
 
-def get_data_by_id(id, connect):
-    with connect.cursor(cursor_factory=NamedTupleCursor) as curs:
-        curs.execute('''SELECT * FROM urls
+def get_id_by_url(url, connection):
+    with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
+        curs.execute('''SELECT id,
+                     FROM urls
+                     WHERE name=%s;''', (url,))
+        return curs.fetchone().id
+
+
+def get_data_by_id(id, connection):
+    with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
+        curs.execute('''SELECT id, name, created_at
+                     FROM urls
                      WHERE id=%s;''', (id,))
         return curs.fetchone()
 
 
-def add_data_to_check(id, url, connect):
-    format_url = f'{urlparse(url).scheme}://{urlparse(url).netloc}'
-    try:
-        get_status = requests.get(format_url).status_code
-    except requests.exceptions.ConnectionError:
-        get_status = None
-    if get_status == 200:
-        head, title, description = get_pars_html(requests.get(format_url))
-        with connect.cursor(cursor_factory=NamedTupleCursor) as curs:
-            curs.execute('''SELECT created_at FROM urls
-                          WHERE id=%s;''', (id,))
-            extract_date = curs.fetchone().created_at
-            curs.execute(f'''INSERT INTO url_checks (url_id, status_code,
-                          h1, title, description, created_at)
-                          VALUES (\'{id}\', {get_status},
-                          \'{head}\', \'{title}\', \'{description}\',
-                          \'{extract_date}\');''')
-            return 'Страница успешно проверена', 'success'
-    return 'Произошла ошибка при проверке', 'danger'
+def add_data_to_check(id, url, get_status, head,
+                      title, description, connection):
+    with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
+        curs.execute('''SELECT created_at FROM urls
+                     WHERE id=%s;''', (id,))
+        extract_date = curs.fetchone().created_at
+        curs.execute(f'''INSERT INTO url_checks (url_id, status_code,
+                      h1, title, description, created_at)
+                      VALUES (\'{id}\', {get_status},
+                      \'{head}\', \'{title}\', \'{description}\',
+                      \'{extract_date}\');''')
 
 
-def get_checks(id, connect):
-    with connect.cursor(cursor_factory=NamedTupleCursor) as curs:
-        curs.execute('''SELECT * FROM url_checks
+def get_checks(id, connection):
+    with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
+        curs.execute('''SELECT id, status_code, h1,
+                     title, description, created_at
+                     FROM url_checks
                      WHERE url_id=%s
                      ORDER BY id DESC;''', (id,))
         return curs.fetchall()
