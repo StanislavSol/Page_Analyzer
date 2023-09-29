@@ -7,7 +7,7 @@ def add_data_to_page(url, date, connection):
                       VALUES (\'{url}\',
                       \'{date}\');''')
         curs.execute('''SELECT id FROM urls
-                         WHERE name=%s;''', (url,))
+                     WHERE name=%s;''', (url,))
         get_id = curs.fetchone()
         return get_id.id
 
@@ -25,7 +25,7 @@ def get_urls(connection):
 
 def get_id_by_url(url, connection):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
-        curs.execute('''SELECT id,
+        curs.execute('''SELECT id
                      FROM urls
                      WHERE name=%s;''', (url,))
         return curs.fetchone().id
