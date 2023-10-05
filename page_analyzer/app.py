@@ -76,11 +76,11 @@ def get_check(id):
         formatted_date = date.today().isoformat()
         with db.create_connection() as conn:
             get_status, head, title, description = get_pars_html(url)
-            try:
+            if get_status == 200:
                 db.add_data_to_check(conn, id, url, get_status, head,
                                      title, description, formatted_date)
                 flash('Страница успешно проверена', 'success')
-            except Exception:
+            else:
                 flash('Произошла ошибка при проверке', 'danger')
 
         return redirect(url_for('get_url_page', id=id))
