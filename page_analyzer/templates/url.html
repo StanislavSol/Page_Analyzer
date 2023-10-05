@@ -1,38 +1,26 @@
-<!DOCTYPE html>
 {% extends "layout.html" %}
 {% block content %}
-   {% if messages %}
-   {% for category, message in messages %}
-   <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
-   {% endfor %}
-   {% endif %}
-
-  <main class="flex-grow-1">
-    <div class="container-lg mt-3">
-        <h1>Сайт: {{ data_website.name }}</h1>
-
-    
   <div class="table-responsive">
     <table class="table table-bordered table-hover text-nowrap" data-test="url">
       <tbody>
         <tr>
           <td>ID</td>
-          <td>{{ data_website.id }}</td>
+          <td>{{ url.id }}</td>
         </tr>
         <tr>
           <td>Имя</td>
-          <td>{{ data_website.name }}</td>
+          <td>{{ url.name }}</td>
         </tr>
         <tr>
           <td>Дата создания</td>
-          <td>{{ data_website.created_at }}</td>
+          <td>{{ url.created_at }}</td>
         </tr>
       </tbody>
     </table>
   </div>
 
     <h2 class="mt-5 mb-3">Проверки</h2>
-    <form method="post" action="/urls/{{ data_website.id }}/checks">
+    <form method="post" action="/urls/{{ url.id }}/checks">
     <input type="submit" class="btn btn-primary" value="Запустить проверку">
     </form>
     
@@ -49,26 +37,26 @@
       </tr>
     </thead>
       <tbody>
-          {% for data in result_check %}
+          {% for check in checks %}
           <tr>
-              <td>{{ data.id }}</td>
-              <td>{{ data.status_code }}</td>
-              {% if data.h1 %}
-              <td>{{ data.h1 }}</td>
+              <td>{{ check.id }}</td>
+              <td>{{ check.status_code }}</td>
+              {% if check.h1 %}
+              <td>{{ check.h1 }}</td>
               {% else %}
               <td></td>
               {% endif %}
-              {% if data.title %}
-              <td>{{ data.title }}</td>
+              {% if check.title %}
+              <td>{{ check.title }}</td>
               {% else %}
               <td></td>
               {% endif %}
-              {% if data.description %}
-              <td>{{ data.description }}</td>
+              {% if check.description %}
+              <td>{{ check.description }}</td>
               {% else %}
               <td></td>
               {% endif %}
-              <td>{{ data.created_at }}</td>
+              <td>{{ check.created_at }}</td>
           </tr>
           {% endfor %}
         
@@ -79,6 +67,4 @@
     </div>
   </main>
 
-  </body>
-</html>
 {% endblock %}
