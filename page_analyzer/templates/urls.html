@@ -1,5 +1,8 @@
 {% extends "layout.html" %}
 {% block content %}
+<main class="flex-grow-1">
+    <div class="container-lg mt-3">
+        <h1>Сайты</h1>
     
 <div class="table-responsive">
   <table class="table table-bordered table-hover text-nowrap" data-test="urls">
@@ -12,15 +15,15 @@
     </tr>
     </thead>
     <tbody>
-        {% for data in urls %}
+        {% for url in urls %}
         <tr>
-            <td>{{ data.id }}</td>
+            <td>{{ url.id }}</td>
             <td>
-                <a href='/urls/{{ data.id }}'>{{ data.name }}</a>
+                <a href='/urls/{{ url.id }}'>{{ url.name }}</a>
             </td>
-            {% if data.created_at and data.status_code %}
-            <td>{{ data.created_at }}</td>
-            <td>{{ data.status_code }}</td>
+            {% if url.created_at and url.status_code %}
+            <td>{{ url.created_at }}</td>
+            <td>{{ url.status_code }}</td>
             {% else %}
             <td></td>
             <td></td>
