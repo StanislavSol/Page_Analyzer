@@ -1,18 +1,12 @@
 from psycopg2.extras import NamedTupleCursor
 import psycopg2
-from dotenv import load_dotenv
-import os
 from contextlib import contextmanager
 
 
-load_dotenv()
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-
 @contextmanager
-def create_connection():
+def create_connection(db_url):
     try:
-        connection = psycopg2.connect(DATABASE_URL)
+        connection = psycopg2.connect(db_url)
         yield connection
     except Exception:
         if connection:
@@ -21,48 +15,52 @@ def create_connection():
     else:
         if connection:
             connection.commit()
-    finally:
-        if connection:
-            connection.close()
 
 
-def add_url_to_page(connection, url, date):
+def close_connection(connection):
+    if connection:
+        connection.close()
+
+
+def add_url(connection, url):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
-        try:
-            curs.execute('''INSERT INTO urls (name, created_at)
-                         VALUES (%s, %s) RETURNING id;''', (url, date))
-            get_id = curs.fetchone()
-            return get_id.id
-        except psycopg2.errors.UniqueViolation:
-            return None
+        curs.execute('''INSERT INTO urls (name)
+                     VALUES (%s) RETURNING id;''', (url,))
+        return curs.fetchone()
 
 
 def get_urls(connection):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
         curs.execute('SELECT id, name FROM urls ORDER BY id DESC;')
-        extract_names_and_id = curs.fetchall()
-        urls = []
-        for data in extract_names_and_id:
-            curs.execute('''SELECT created_at, status_code
-                         FROM url_checks
-                         WHERE url_id = %s;''', (data.id,))
-            extract_status = curs.fetchone()
-            if extract_status:
-                urls.append(data._asdict() | extract_status._asdict())
-            else:
-                urls.append(data._asdict())
+        urls = curs.fetchall()
+        curs.execute('''SELECT url_id, created_at, status_code
+                     FROM url_checks
+                     ORDER BY created_at DESC;''')
+        url_checks = curs.fetchall()
+        if url_checks:
+            result = []
+            for url in urls:
+                flag = False
+                for check in url_checks:
+                    if url.id == check.url_id:
+                        result.append(url._asdict() | check._asdict())
+                        flag = True
+                        break
+                if not flag:
+                    result.append(url._asdict())
+            return result
         return urls
 
 
-def get_id_by_url(connection, url):
+def get_url_by_name(connection, name):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
-        curs.execute('''SELECT id
+        curs.execute('''SELECT id, name, created_at
                      FROM urls
-                     WHERE name=%s;''', (url,))
-        return curs.fetchone().id
+                     WHERE name=%s;''', (name,))
+        return curs.fetchone()
 
 
-def get_data_by_id(connection, id):
+def get_url_by_id(connection, id):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
         curs.execute('''SELECT id, name, created_at
                      FROM urls
@@ -70,13 +68,16 @@ def get_data_by_id(connection, id):
         return curs.fetchone()
 
 
-def add_data_to_check(connection, id, url, get_status, head,
-                      title, description, date):
+def add_url_check(connection, check):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
         curs.execute('''INSERT INTO url_checks (url_id, status_code,
-                     h1, title, description, created_at)
-                     VALUES (%s, %s, %s, %s, %s, %s);''',
-                     (id, get_status, head, title, description, date))
+                     h1, title, description)
+                     VALUES (%s, %s, %s, %s, %s);''',
+                     (check['id'],
+                      check['status'],
+                      check['head'],
+                      check['title'],
+                      check['description'],))
 
 
 def get_checks(connection, id):
