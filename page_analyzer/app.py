@@ -62,11 +62,10 @@ def get_url_page(id):
         url = db.get_url_by_id(conn, id)
         messages = get_flashed_messages(with_categories=True)
     db.close_connection(conn)
-    return render_template(
-            'url.html',
-            messages=messages,
-            url=url,
-            checks=checks)
+    return render_template('url.html',
+                           messages=messages,
+                           url=url,
+                           checks=checks)
 
 
 @app.post('/urls/<int:id>/checks')
