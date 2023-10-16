@@ -1,7 +1,7 @@
 import validators
 
 
-def valid_url(url):
+def get_error(url):
     error = []
     if not url:
         error = ['URL обязателен', 'danger']

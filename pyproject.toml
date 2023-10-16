@@ -5,6 +5,7 @@ description = "Web application that analyzes specified pages for SEO suitability
 authors = ["Solovtcov Stanislav <vandemar@bk.ru>"]
 readme = "README.md"
 packages = [{include = "page_analyzer"}]
+repository = "https://github.com/StanislavSol/python-project-83.git"
 
 [tool.poetry.dependencies]
 python = "^3.10"

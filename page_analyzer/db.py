@@ -26,7 +26,7 @@ def add_url(connection, url):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
         curs.execute('''INSERT INTO urls (name)
                      VALUES (%s) RETURNING id;''', (url,))
-        return curs.fetchone()
+        return curs.fetchone().id
 
 
 def get_urls(connection):
@@ -40,24 +40,25 @@ def get_urls(connection):
         if url_checks:
             result = []
             for url in urls:
-                flag = False
+                len_result = len(result)
                 for check in url_checks:
                     if url.id == check.url_id:
                         result.append(url._asdict() | check._asdict())
-                        flag = True
                         break
-                if not flag:
+                if len(result) == len_result:
                     result.append(url._asdict())
             return result
         return urls
 
 
-def get_url_by_name(connection, name):
+def get_id_by_url(connection, name):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
         curs.execute('''SELECT id, name, created_at
                      FROM urls
                      WHERE name=%s;''', (name,))
-        return curs.fetchone()
+        url_info = curs.fetchone()
+        if url_info is not None:
+            return url_info.id
 
 
 def get_url_by_id(connection, id):
