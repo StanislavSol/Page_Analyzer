@@ -51,14 +51,14 @@ def get_urls(connection):
         return urls
 
 
-def get_id_by_url(connection, name):
+def get_url_by_name(connection, name):
     with connection.cursor(cursor_factory=NamedTupleCursor) as curs:
         curs.execute('''SELECT id, name, created_at
                      FROM urls
                      WHERE name=%s;''', (name,))
         url_info = curs.fetchone()
         if url_info is not None:
-            return url_info.id
+            return url_info
 
 
 def get_url_by_id(connection, id):
@@ -74,7 +74,7 @@ def add_url_check(connection, check):
         curs.execute('''INSERT INTO url_checks (url_id, status_code,
                      h1, title, description)
                      VALUES (%s, %s, %s, %s, %s);''',
-                     (check['id'],
+                     (check['url_id'],
                       check['status'],
                       check['head'],
                       check['title'],
